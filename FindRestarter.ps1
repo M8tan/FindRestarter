@@ -51,7 +51,7 @@ $Operator = Validate-User -Username $env:USERNAME -Domains $Domains -ErrorAction
 if($Operator -eq $null){$Operator = @{Name = "Unknown guest"; SamAccountName = $env:USERNAME}}
 
 $Form = New-Object System.Windows.Forms.Form
-$Form.Text = "Find Latest Restarter - current operator: $($env:USERNAME)"
+$Form.Text = "Find Latest Restarter - current operator: $($Operator.SamAccountName)"
 $Form.Size = New-Object System.Drawing.Size(500,350)
 $Form.StartPosition = "CenterScreen"
 
