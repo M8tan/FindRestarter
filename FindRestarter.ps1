@@ -81,7 +81,7 @@ $OutputTB.Multiline = $true
 $OutputTB.ScrollBars = "Vertical"
 $OutputTB.ReadOnly = $true
 $OutputTB.Font = New-Object System.Drawing.font("arial", 12,  [System.Drawing.FontStyle]::Bold)
-$OutputTB.Text = "The last person to restart $($env:COMPUTERNAME) was...`r`n$($Restarter.Name)`r`nDo you want to disable this user?`r`nOf course, I would advise you to always be merciful, compassionate and forgiving.`r`n`r`nHowever, it's only a click of a button away"
+$OutputTB.Text = "The last person to restart $($env:COMPUTERNAME) was...`r`n$($Restarter.Name)`r`nDo you want to disable this user?`r`nOf course, I would advise you to always be merciful, compassionate and forgiving.`r`n`r`nHowever, it's two clicks of a button away"
 
 $DisableButton = New-Object System.Windows.Forms.Button
 $DisableButton.Text = "Disable"
