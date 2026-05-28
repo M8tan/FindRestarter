@@ -45,6 +45,24 @@ function Get-Restarter{
     return $Restarter
 }
 
+function Log-Action{
+    [CmdletBinding()]
+    param(
+        [string]$OperatorName,
+        [string]$Message
+    )
+    try{
+        $Time = Get-Date -Format "dd/MM/yyyy HH:mm:ss" -ErrorAction Stop
+    } catch {
+        throw "Can't get a date {relatable} - $($_.exception.message)"
+    }
+    try {
+        "$($Time) | $($env:COMPUTERNAME)\$($OperatorName) | $($Message)" | Out-File -FilePath ".\FindRestarterLogs.log" -Encoding utf8 -Append -Confirm:$false -Force -ErrorAction Stop
+    } catch {
+        throw "Can't write to file - $($_.exception.message)"
+    }
+}
+
 try {$Domains = (Get-ADForest -ErrorAction Stop).domains} catch {[void]([System.Windows.Forms.MessageBox]::Show("Can't get domains - $($_.exception.message)", "Sorry!", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)); return}
 try{$Restarter = Get-Restarter -Domains $Domains -ErrorAction Stop} catch {[void]([System.Windows.Forms.MessageBox]::Show("Can't get restarter - $($_.exception.message)", "Sorry!", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)); return}
 $Operator = Validate-User -Username $env:USERNAME -Domains $Domains -ErrorAction SilentlyContinue
@@ -75,6 +93,7 @@ $ConfirmDisableButton.Text = "Confirm"
 $ConfirmDisableButton.Width = 70
 $ConfirmDisableButton.Font = New-Object System.Drawing.font("arial", 10,  [System.Drawing.FontStyle]::Bold)
 $ConfirmDisableButton.Visible = $false
+$ConfirmDisableButton.TabStop = $false
 
 $ForgiveButton = New-Object System.Windows.Forms.Button
 $ForgiveButton.Text = "Forgive"
@@ -86,9 +105,15 @@ $DisableButton.add_click({
     $OutputTB.Clear()
     try {
         $RandomX = Get-Random -Minimum 150 -Maximum 300 -ErrorAction Stop
-        $RandomY = Get-Random -Minimum 10 -Maximum 90 -ErrorAction Stop
+        $RandomY = Get-Random -Minimum 10 -Maximum 80 -ErrorAction Stop
     } catch {
         $OutputTB.AppendText("Error getting confirmation button coordinates - $($_.exception.message)")
+        return
+    }
+    try {
+        Log-Action -OperatorName $Operator.SamAccountName -Message "$($Operator.SamAccountName) initiated the disabling of $($Restarter.SamAccountName)" -ErrorAction Stop
+    } catch {
+        $OutputTB.AppendText("Failed to log actions.`r`n$($_.exception.message)")
         return
     }
     $ConfirmDisableButton.Location = New-Object System.Drawing.Point($RandomX, $RandomY)
@@ -101,10 +126,15 @@ $ConfirmDisableButton.add_click({
     $OutputTB.Clear()
     try {
         Disable-ADAccount -Identity $Restarter -Confirm:$false -ErrorAction Stop
+        Log-Action -OperatorName $Operator.SamAccountName -Message "$($Operator.SamAccountName) disabled $($Restarter.SamAccountName)" -ErrorAction Stop
     } catch {
         $OutputTB.AppendText("An error occured -`r`n$($_.exception.message)")
+        Log-Action -OperatorName $Operator.SamAccountName -Message "$($Operator.SamAccountName) failed to disable $($Restarter.SamAccountName) - $($_.exception.message)" -ErrorAction SilentlyContinue
         return
     }
+    $ForgiveButton.Visible = $false
+    $DisableButton.Visible = $false
+    $ConfirmDisableButton.Visible = $false
     $OutputTB.AppendText("OK $($Operator.Name), you're a funny person :)`r`nDisabled $($Restarter.Name)")
 })
 
