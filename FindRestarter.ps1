@@ -62,13 +62,19 @@ $OutputTB.Multiline = $true
 $OutputTB.ScrollBars = "Vertical"
 $OutputTB.ReadOnly = $true
 $OutputTB.Font = New-Object System.Drawing.font("arial", 12,  [System.Drawing.FontStyle]::Bold)
-$OutputTB.Text = "The last person to restart $($env:COMPUTERNAME) was...`r`n$($Restarter.Name)`r`nDo you want to disable this user?`r`nOf course, I would advise you to always be merciful, and know how to forgive others.`r`n`r`nHowever, it's only a click of a button away"
+$OutputTB.Text = "The last person to restart $($env:COMPUTERNAME) was...`r`n$($Restarter.Name)`r`nDo you want to disable this user?`r`nOf course, I would advise you to always be merciful, compassionate and forgiving.`r`n`r`nHowever, it's only a click of a button away"
 
 $DisableButton = New-Object System.Windows.Forms.Button
 $DisableButton.Text = "Disable"
 $DisableButton.Location = New-Object System.Drawing.Point(70,40)
 $DisableButton.Width = 70
 $DisableButton.Font = New-Object System.Drawing.font("arial", 10,  [System.Drawing.FontStyle]::Bold)
+
+$ConfirmDisableButton = New-Object System.Windows.Forms.Button
+$ConfirmDisableButton.Text = "Confirm"
+$ConfirmDisableButton.Width = 70
+$ConfirmDisableButton.Font = New-Object System.Drawing.font("arial", 10,  [System.Drawing.FontStyle]::Bold)
+$ConfirmDisableButton.Visible = $false
 
 $ForgiveButton = New-Object System.Windows.Forms.Button
 $ForgiveButton.Text = "Forgive"
@@ -77,6 +83,21 @@ $ForgiveButton.Width = 70
 $ForgiveButton.Font = New-Object System.Drawing.font("arial", 10,  [System.Drawing.FontStyle]::Bold)
 
 $DisableButton.add_click({
+    $OutputTB.Clear()
+    try {
+        $RandomX = Get-Random -Minimum 150 -Maximum 300 -ErrorAction Stop
+        $RandomY = Get-Random -Minimum 10 -Maximum 90 -ErrorAction Stop
+    } catch {
+        $OutputTB.AppendText("Error getting confirmation button coordinates - $($_.exception.message)")
+        return
+    }
+    $ConfirmDisableButton.Location = New-Object System.Drawing.Point($RandomX, $RandomY)
+    $OutputTB.AppendText("Are you sure?`r`nPlease confirm your actions")
+    $ConfirmDisableButton.Visible = $true
+
+})
+
+$ConfirmDisableButton.add_click({
     $OutputTB.Clear()
     try {
         Disable-ADAccount -Identity $Restarter -Confirm:$false -ErrorAction Stop
@@ -89,9 +110,10 @@ $DisableButton.add_click({
 
 $ForgiveButton.add_click({
     $OutputTB.Clear()
-    $OutputTB.AppendText("OK $($Operator.Name), you're a nice person`r`nLeaving the restarter unharmed")
+    $ConfirmDisableButton.Visible = $false
+    $OutputTB.AppendText("OK $($Operator.Name), you're a 'nice person'`r`nLeaving the restarter unharmed")
 })
 
-$Form.Controls.AddRange(@($DisableButton, $ForgiveButton, $OutputTB))
+$Form.Controls.AddRange(@($DisableButton, $ConfirmDisableButton, $ForgiveButton, $OutputTB))
 
 [void]$Form.ShowDialog()
