@@ -6,7 +6,7 @@ How the app works:
  - Searches for the latest windows event with 1074 ID, which represents planned shutdowns
  - Fetches the user ID
  - Searches the entire AD forest for a user with that SID
- - Displayes the user's name, and gives you the option to disable it  
+ - Displays the user's name, and gives you the option to disable it  
   
 **Notice**  
  - It only works in AD domain environments, and only if you have appropriate permissions
