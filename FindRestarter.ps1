@@ -67,7 +67,7 @@ try {$Domains = (Get-ADForest -ErrorAction Stop).domains} catch {[void]([System.
 try{$Restarter = Get-Restarter -Domains $Domains -ErrorAction Stop} catch {[void]([System.Windows.Forms.MessageBox]::Show("Can't get restarter - $($_.exception.message)", "Sorry!", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)); return}
 $Operator = Validate-User -Username $env:USERNAME -Domains $Domains -ErrorAction SilentlyContinue
 if($Operator -eq $null){$Operator = @{Name = "Unknown guest"; SamAccountName = $env:USERNAME}}
-$TakingRisks = $true # Modify to change usability, if true - user will actually get disabled!
+$ActuallyDisableUser = $false # Modify to change usability. I know that the variable name is kinda confusing, so FYI - if set to true, the user will actually get disabled!
 
 $Form = New-Object System.Windows.Forms.Form
 $Form.Text = "Find Latest Restarter - current operator: $($Operator.SamAccountName)"
@@ -125,7 +125,7 @@ $DisableButton.add_click({
 
 $ConfirmDisableButton.add_click({
     $OutputTB.Clear()
-    if($TakingRisks){
+    if($ActuallyDisableUser){
         try {
             Disable-ADAccount -Identity $Restarter -Confirm:$false -ErrorAction Stop
             Log-Action -OperatorName $Operator.SamAccountName -Message "$($Operator.SamAccountName) disabled $($Restarter.SamAccountName)" -ErrorAction Stop
