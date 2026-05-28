@@ -67,6 +67,7 @@ try {$Domains = (Get-ADForest -ErrorAction Stop).domains} catch {[void]([System.
 try{$Restarter = Get-Restarter -Domains $Domains -ErrorAction Stop} catch {[void]([System.Windows.Forms.MessageBox]::Show("Can't get restarter - $($_.exception.message)", "Sorry!", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)); return}
 $Operator = Validate-User -Username $env:USERNAME -Domains $Domains -ErrorAction SilentlyContinue
 if($Operator -eq $null){$Operator = @{Name = "Unknown guest"; SamAccountName = $env:USERNAME}}
+$TakingRisks = $true # Modify to change usability, if true - user will actually get disabled!
 
 $Form = New-Object System.Windows.Forms.Form
 $Form.Text = "Find Latest Restarter - current operator: $($Operator.SamAccountName)"
@@ -124,18 +125,22 @@ $DisableButton.add_click({
 
 $ConfirmDisableButton.add_click({
     $OutputTB.Clear()
-    try {
-        Disable-ADAccount -Identity $Restarter -Confirm:$false -ErrorAction Stop
-        Log-Action -OperatorName $Operator.SamAccountName -Message "$($Operator.SamAccountName) disabled $($Restarter.SamAccountName)" -ErrorAction Stop
-    } catch {
-        $OutputTB.AppendText("An error occured -`r`n$($_.exception.message)")
-        Log-Action -OperatorName $Operator.SamAccountName -Message "$($Operator.SamAccountName) failed to disable $($Restarter.SamAccountName) - $($_.exception.message)" -ErrorAction SilentlyContinue
-        return
+    if($TakingRisks){
+        try {
+            Disable-ADAccount -Identity $Restarter -Confirm:$false -ErrorAction Stop
+            Log-Action -OperatorName $Operator.SamAccountName -Message "$($Operator.SamAccountName) disabled $($Restarter.SamAccountName)" -ErrorAction Stop
+        } catch {
+            $OutputTB.AppendText("An error occured -`r`n$($_.exception.message)")
+            Log-Action -OperatorName $Operator.SamAccountName -Message "$($Operator.SamAccountName) failed to disable $($Restarter.SamAccountName) - $($_.exception.message)" -ErrorAction SilentlyContinue
+            return
+        }
+        $ForgiveButton.Visible = $false
+        $DisableButton.Visible = $false
+        $ConfirmDisableButton.Visible = $false
+        $OutputTB.AppendText("OK $($Operator.Name), you're a funny person :)`r`nDisabled $($Restarter.Name)")
+    } else {
+        $OutputTB.AppendText("If you were taking risks, the user $($Restarter.name) would be disabled by now")
     }
-    $ForgiveButton.Visible = $false
-    $DisableButton.Visible = $false
-    $ConfirmDisableButton.Visible = $false
-    $OutputTB.AppendText("OK $($Operator.Name), you're a funny person :)`r`nDisabled $($Restarter.Name)")
 })
 
 $ForgiveButton.add_click({
